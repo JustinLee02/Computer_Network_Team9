@@ -1,0 +1,58 @@
+# ┌ Python bytecode, cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ┌ virtualenv / env
+env/
+venv/
+ENV/
+.venv/
+
+# ┌ IDE / editor
+.idea/
+*.iml
+.vscode/
+*.suo
+*.user
+*.swp
+*.kate-swp
+
+# ┌ macOS
+.DS_Store
+
+# ┌ logs
+*.log
+
+# ┌ dotenv 환경변수 파일
+.env
+.env.*.local
+
+# ┌ 테스트 커버리지
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+
+# ┌ 빌드 / 배포 산출물
+build/
+dist/
+*.egg-info/
+*.egg
+
+# ┌ 데이터베이스
+*.sqlite3
+
+# ┌ Jupyter
+.ipynb_checkpoints/
+
+# ┌ PyInstaller
+*.spec
+
+# ┌ 추가로, 프로젝트에 따라…
+# node_modules/       # Node.js 를 쓴다면
+# .mypy_cache/        # MyPy를 쓰는 경우
+# .ruff_cache/        # Ruff를 쓰는 경우
