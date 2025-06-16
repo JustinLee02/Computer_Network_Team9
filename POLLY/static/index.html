@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>WS 투표 테스트</title>
+  <style>
+    body { font-family: sans-serif; padding: 1rem; }
+    #options div { margin-bottom: .5rem; }
+    button { margin-left: .5rem; }
+    #vote-list { margin-top: 2rem; }
+    .vote { border: 1px solid #ccc; padding: 1rem; margin-bottom: 1rem; }
+    .counts { margin-top: .5rem; }
+  </style>
+</head>
+<body>
+  <h1>WS 투표 테스트</h1>
+
+  <!-- 1) 투표 생성 폼 -->
+  <div id="create-form">
+    <input id="title" type="text" placeholder="투표 주제" />
+    <div id="options">
+      <div>
+        <input class="opt" type="text" placeholder="선택지 1" />
+        <button type="button" onclick="removeOption(this)">❌</button>
+      </div>
+      <div>
+        <input class="opt" type="text" placeholder="선택지 2" />
+        <button type="button" onclick="removeOption(this)">❌</button>
+      </div>
+    </div>
+    <button type="button" onclick="addOption()">➕ 선택지 추가</button>
+    <button type="button" onclick="submitVote()">제출</button>
+  </div>
+
+  <!-- 2) 생성된 투표 목록 -->
+  <div id="vote-list"></div>
+
+  <script>
+    let ws;
+
+    function initWebSocket() {
+      ws = new WebSocket("ws://localhost:8000/ws");
+      ws.onopen = () => console.log("✅ WS 연결됨");
+      ws.onmessage = e => {
+        const msg = JSON.parse(e.data);
+        if (msg.type === "vote_created") {
+          renderVote(msg.vote_id, msg.title, msg.options);
+        }
+        if (msg.type === "vote_update") {
+          updateCounts(msg.vote_id, msg.counts);
+        }
+      };
+      ws.onerror = err => console.error("WS 에러", err);
+      ws.onclose = () => console.log("WS 닫힘");
+    }
+
+    function addOption() {
+      const container = document.getElementById("options");
+      const idx = container.children.length + 1;
+      const div = document.createElement("div");
+      div.innerHTML = `
+        <input class="opt" type="text" placeholder="선택지 ${idx}" />
+        <button type="button" onclick="removeOption(this)">❌</button>
+      `;
+      container.appendChild(div);
+    }
+
+    function removeOption(btn) {
+      const div = btn.parentNode;
+      div.parentNode.removeChild(div);
+    }
+
+    async function submitVote() {
+      const title = document.getElementById("title").value.trim();
+      const opts = Array.from(document.querySelectorAll(".opt"))
+                        .map(i => i.value.trim())
+                        .filter(v => v);
+      if (!title || opts.length < 2) {
+        alert("주제와 최소 2개의 선택지를 입력해 주세요.");
+        return;
+      }
+      const voteId = crypto.randomUUID();
+      // REST API 호출
+      const res = await fetch("/votes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vote_id: voteId, title, options: opts })
+      });
+      const data = await res.json();
+      if (data.status === "ok") {
+        console.log("투표 생성 완료:", voteId);
+        // 폼 초기화
+        document.getElementById("title").value = "";
+        document.getElementById("options").innerHTML = "";
+        addOption(); addOption();
+      } else {
+        alert("생성 실패: " + (data.detail||""));
+      }
+    }
+
+    function renderVote(id, title, options) {
+      const list = document.getElementById("vote-list");
+      const div = document.createElement("div");
+      div.id = "vote-" + id;
+      div.className = "vote";
+      div.innerHTML = `
+        <h2>${title}</h2>
+        <div>${options.map(o => `<button onclick="cast('${id}','${o}')">${o}</button>`).join(' ')}</div>
+        <div class="counts" id="counts-${id}">
+          ${options.map(o => `<span>${o}: 0</span>`).join(' ')}
+        </div>
+      `;
+      list.prepend(div);
+    }
+
+    function updateCounts(id, counts) {
+      const cntDiv = document.getElementById("counts-" + id);
+      cntDiv.innerHTML = Object.entries(counts)
+        .map(([opt, num]) => `<span>${opt}: ${num}</span>`)
+        .join(' ');
+    }
+
+    function cast(voteId, choice) {
+      ws.send(JSON.stringify({
+        type: "cast_vote",
+        payload: { vote_id: voteId, choice }
+      }));
+    }
+
+    // 페이지 로드되면 WebSocket 연결
+    window.onload = () => {
+      initWebSocket();
+    };
+  </script>
+</body>
+</html>
