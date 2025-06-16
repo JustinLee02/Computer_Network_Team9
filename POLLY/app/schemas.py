@@ -30,6 +30,9 @@ class VoteSummary(BaseModel):
     option_count: int
     status: VoteStatus
 
+class VoteOptions(BaseModel):
+    options: List[str]
+
 class WSMessage(BaseModel):
     type: str
     payload: dict

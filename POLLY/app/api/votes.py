@@ -5,7 +5,7 @@ from typing import Dict, List
 from datetime import datetime
 from uuid import uuid4
 
-from app.schemas import VoteCreate, VoteSummary, VoteStatus
+from app.schemas import VoteCreate, VoteSummary, VoteStatus, VoteOptions
 from app.manager import manager
 
 router = APIRouter()
@@ -64,3 +64,12 @@ async def list_votes():
             status       = status
         ))
     return summaries
+
+@router.get("/votes/{vote_id}", response_model=VoteOptions)
+async def get_vote_options(vote_id: str):
+    """
+    vote_id에 해당하는 투표의 'options' 리스트만 반환
+    """
+    if vote_id not in votes:
+        raise HTTPException(404, detail="vote_id를 찾을 수 없습니다.")
+    return VoteOptions(options=votes[vote_id]["options"])
