@@ -30,8 +30,14 @@ class VoteSummary(BaseModel):
     option_count: int
     status: VoteStatus
 
+class OptionCount(BaseModel):
+    option: str
+    votes: int
+
 class VoteOptions(BaseModel):
-    options: List[str]
+    options: List[OptionCount]
+    total_votes: int
+
 
 class WSMessage(BaseModel):
     type: str

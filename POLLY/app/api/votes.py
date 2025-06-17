@@ -5,7 +5,7 @@ from typing import Dict, List
 from datetime import datetime
 from uuid import uuid4
 
-from app.schemas import VoteCreate, VoteSummary, VoteStatus, VoteOptions
+from app.schemas import VoteCreate, VoteSummary, VoteStatus, VoteOptions, OptionCount
 from app.manager import manager
 
 router = APIRouter()
@@ -15,7 +15,7 @@ DATA_FILE = Path(__file__).parent.parent / "votes_data.json"
 try:
     votes: Dict[str, dict] = json.loads(DATA_FILE.read_text(encoding="utf-8"))
 except FileNotFoundError:
-    votes: Dict[str, dict] = {}
+    votes = {}
 
 def save_votes():
     DATA_FILE.write_text(
@@ -25,7 +25,6 @@ def save_votes():
 
 @router.post("/votes")
 async def create_vote(vote: VoteCreate):
-    # 서버에서 vote_id 생성
     vid = str(uuid4())
     votes[vid] = {
         "title":       vote.title,
@@ -37,7 +36,6 @@ async def create_vote(vote: VoteCreate):
     }
     save_votes()
 
-    # WebSocket 브로드캐스트
     await manager.broadcast({
         "type":        "vote_created",
         "vote_id":     vid,
@@ -65,11 +63,20 @@ async def list_votes():
         ))
     return summaries
 
-@router.get("/votes/{vote_id}", response_model=VoteOptions)
-async def get_vote_options(vote_id: str):
-    """
-    vote_id에 해당하는 투표의 'options' 리스트만 반환
-    """
+@router.get("/votes/{vote_id}/options", response_model=VoteOptions)
+async def get_vote_options_detail(vote_id: str):
     if vote_id not in votes:
         raise HTTPException(404, detail="vote_id를 찾을 수 없습니다.")
-    return VoteOptions(options=votes[vote_id]["options"])
+    data = votes[vote_id]
+    counts = data["counts"]
+    total  = sum(counts.values())
+
+    options = [
+        OptionCount(option=opt, votes=counts.get(opt, 0))
+        for opt in data["options"]
+    ]
+
+    return VoteOptions(
+        options     = options,
+        total_votes = total
+    )
