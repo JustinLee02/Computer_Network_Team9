@@ -52,7 +52,7 @@ async def create_vote(vote: VoteCreate):
     save_votes()
 
     # WebSocket 브로드캐스트 (생성 알림)
-    await manager.broadcast({
+    await manager.broadcast_vote({
         "type":      "vote_created",
         "vote_id":   vid,
         "title":     vote.title,

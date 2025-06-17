@@ -196,5 +196,39 @@
     "active": true,
     "is_public": true,
     "password": "$2b$12$XRCewXHUMcQlXRdD7ObDH.huERSU4PcNpz9cl5/p.Iz32vAy0GryO"
+  },
+  "cd3c4dce-cc4f-4ffa-8e43-7f41cd2d1309": {
+    "title": "테스트 투표",
+    "description": "예시 설명",
+    "options": [
+      "A",
+      "B",
+      "C"
+    ],
+    "counts": {
+      "A": 0,
+      "B": 0,
+      "C": 0
+    },
+    "created_at": "2025-06-17 14:54:34.213994",
+    "active": true,
+    "is_public": false,
+    "password": "$2b$12$XSdFrae/Ij39JvrsF5qKMOhgZyD/F3n8EXaWP45sRZ..L5pQGQctO"
+  },
+  "b7a457dd-4323-4572-8f01-9f47fa81ad3a": {
+    "title": "ㅇㄹㅁ",
+    "description": null,
+    "options": [
+      "121",
+      "2121"
+    ],
+    "counts": {
+      "121": 0,
+      "2121": 0
+    },
+    "created_at": "2025-06-17 14:56:40.262970",
+    "active": true,
+    "is_public": true,
+    "password": "$2b$12$yQg4yWDdhRYFrD901vJFqeGe9VoFsf9a/gpIv8rtdNaEwguH/RvTO"
   }
 }
