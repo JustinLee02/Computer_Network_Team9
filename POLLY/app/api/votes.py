@@ -13,6 +13,7 @@ from app.schemas import (
     OptionCount
 )
 from app.manager import manager
+from app.security import hash_password, verify_password
 
 router = APIRouter()
 DATA_FILE = Path(__file__).parent.parent / "votes_data.json"
@@ -47,7 +48,7 @@ async def create_vote(vote: VoteCreate):
         "created_at":  datetime.utcnow(),
         "active":      True,
         "is_public":   vote.is_public,
-        "password":    vote.password
+        "password":    hash_password(vote.password)
     }
     save_votes()
 
@@ -110,7 +111,8 @@ async def get_vote_options_detail(
 
     # 비공개 투표일 때만 password 검증
     if not data.get("is_public", True):
-        if password != data.get("password"):
+        hashed = data.get("password", "")
+        if not verify_password(password, hashed):
             raise HTTPException(status_code=401, detail="비밀번호가 틀렸습니다.")
 
     counts = data["counts"]          # { option_text: count }
