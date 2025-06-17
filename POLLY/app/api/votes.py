@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 from fastapi import APIRouter, HTTPException, Query
-from typing import Dict, List
+from typing import Dict, List, Optional
 from datetime import datetime
 from uuid import uuid4
 
@@ -37,7 +37,6 @@ async def create_vote(vote: VoteCreate):
     """
     투표 생성:
     - title, description, options, is_public, password 모두 필수
-    - 비공개 투표에는 password가 반드시 설정돼야 함
     """
     vid = str(uuid4())
     votes[vid] = {
@@ -54,12 +53,12 @@ async def create_vote(vote: VoteCreate):
 
     # WebSocket 브로드캐스트 (생성 알림)
     await manager.broadcast({
-        "type":        "vote_created",
-        "vote_id":     vid,
-        "title":       vote.title,
+        "type":      "vote_created",
+        "vote_id":   vid,
+        "title":     vote.title,
         "description": vote.description,
-        "options":     vote.options,
-        "is_public":   vote.is_public
+        "options":   vote.options,
+        "is_public": vote.is_public
     })
 
     return {"status": "ok", "vote_id": vid}
@@ -67,8 +66,7 @@ async def create_vote(vote: VoteCreate):
 @router.get("/votes", response_model=List[VoteSummary])
 async def list_votes():
     """
-    모든 투표 목록 요약 조회:
-    - vote_id, title, description, total_votes, created_at, option_count, status, is_public 반환
+    모든 투표 목록 요약 조회
     """
     summaries: List[VoteSummary] = []
     for vid, data in votes.items():
@@ -93,26 +91,24 @@ async def list_votes():
 )
 async def get_vote_options_detail(
     vote_id: str,
-    password: str = Query(
-        ...,
+    password: Optional[str] = Query(
+        None,
         min_length=1,
-        description="비공개 투표일 경우엔 생성 시 설정한 비밀번호, 공개 투표면 어떤 값이든 상관없음"
+        description="비공개 투표일 때만 필요. 공개 투표면 생략 가능"
     )
 ):
     """
-    특정 투표의 옵션별 득표 수와 전체 투표 수를 반환.
-    - 공개 투표: password 값 무시
-    - 비공개 투표: password가 일치해야 조회 가능
+    투표의 옵션별 득표 수 및 전체 투표 수 반환
+    - is_public=False: password 검증 필수
+    - is_public=True: password 생략 가능
     """
-    if vote_id not in votes:
+    data = votes.get(vote_id)
+    if not data:
         raise HTTPException(status_code=404, detail="vote_id를 찾을 수 없습니다.")
 
-    data = votes[vote_id]
-
-    # 비공개 투표일 때만 password 검증
+    # 비공개 투표일 때만 비밀번호 해시 검증
     if not data.get("is_public", True):
-        hashed = data.get("password", "")
-        if not verify_password(password, hashed):
+        if not password or not verify_password(password, data["password"]):
             raise HTTPException(status_code=401, detail="비밀번호가 틀렸습니다.")
 
     counts = data["counts"]          # { option_text: count }
