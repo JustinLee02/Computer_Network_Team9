@@ -5,14 +5,14 @@ from app.ws.manager import manager
 
 router = APIRouter()
 
-@router.websocket("/ws/chat/{user_id}")
+@router.websocket("/ws/chat")
 async def chat_ws(
     websocket: WebSocket,
-    user_id: str,
-    nickname: str = Query(...)
+    nickname: str = Query(..., description="채팅에서 사용할 닉네임")
 ):
+    """닉네임 하나만으로 채팅 세션을 관리하는 WebSocket 엔드포인트"""
     # 1) 연결
-    await manager.connect_chat(user_id, websocket)
+    await manager.connect_chat(nickname, websocket)
     print(f"{nickname} 접속")
 
     try:
@@ -37,4 +37,6 @@ async def chat_ws(
                     print(f"{nickname}: {text}")
     except WebSocketDisconnect:
         print(f"{nickname} 연결 해제")
-        manager.disconnect_chat(user_id)
+    finally:
+        # 연결 해제 처리
+        manager.disconnect_chat(nickname)

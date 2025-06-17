@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, status
 from typing import Dict, List, Optional
 from datetime import datetime
 from uuid import uuid4
@@ -120,3 +120,48 @@ async def get_vote_options_detail(
     ]
 
     return VoteOptions(options=options, total_votes=total)
+
+@router.delete(
+    "/votes/{vote_id}",
+    status_code=status.HTTP_200_OK
+)
+async def delete_vote(
+    vote_id: str,
+    password: str = Query(
+        ...,
+        min_length=1,
+        description="삭제하려는 투표의 비밀번호 (생성 시 설정한 값)"
+    )
+):
+    """
+    투표 삭제
+    - vote_id가 존재해야 하고,
+    - 생성 시 설정된 password와 일치해야 삭제됩니다.
+    """
+    # 1) 존재 확인
+    data = votes.get(vote_id)
+    if not data:
+        raise HTTPException(
+            status_code=404,
+            detail="vote_id를 찾을 수 없습니다."
+        )
+
+    # 2) 비밀번호 검증
+    hashed = data.get("password", "")
+    if not verify_password(password, hashed):
+        raise HTTPException(
+            status_code=401,
+            detail="비밀번호가 틀렸습니다."
+        )
+
+    # 3) 삭제 & 저장
+    votes.pop(vote_id)
+    save_votes()
+
+    # 4) (선택) WebSocket 브로드캐스트
+    await manager.broadcast_vote({
+        "type":    "vote_deleted",
+        "vote_id": vote_id
+    })
+
+    return {"status": "deleted", "vote_id": vote_id}
