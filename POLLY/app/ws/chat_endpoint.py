@@ -37,6 +37,7 @@ async def chat_ws(
                     print(f"{nickname}: {text}")
     except WebSocketDisconnect:
         print(f"{nickname} 연결 해제")
+        manager.disconnect_chat(websocket)
     finally:
         # 연결 해제 처리
         manager.disconnect_chat(nickname)
