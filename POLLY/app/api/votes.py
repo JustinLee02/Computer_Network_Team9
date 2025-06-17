@@ -12,7 +12,7 @@ from app.schemas import (
     VoteOptions,
     OptionCount
 )
-from app.manager import manager
+from app.ws.manager import manager
 from app.security import hash_password, verify_password
 
 router = APIRouter()
