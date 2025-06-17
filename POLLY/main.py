@@ -7,6 +7,7 @@ from pathlib import Path
 from app.api.votes   import router as votes_router
 from app.api.health  import router as health_router
 from app.ws.endpoint import router as ws_router
+from app.ws.chat_endpoint import router as chat_ws_router
 
 app = FastAPI()
 
@@ -28,6 +29,7 @@ app.include_router(health_router)
 
 # ─── WebSocket 라우트 등록 ──────────────────────────
 app.include_router(ws_router)
+app.include_router(chat_ws_router)
 
 # ─── index.html 반환 ─────────────────────────────────
 @app.get("/", response_class=HTMLResponse)
