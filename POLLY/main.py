@@ -9,6 +9,9 @@ from app.api.health  import router as health_router
 from app.ws.endpoint import router as ws_router
 from app.ws.chat_endpoint import router as chat_ws_router
 
+from dotenv import load_dotenv
+load_dotenv()
+
 app = FastAPI()
 
 # ─── CORS 설정 ─────────────────────────────────────

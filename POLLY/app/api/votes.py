@@ -1,6 +1,7 @@
 import json
+import os
 from pathlib import Path
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, HTTPException, Query, status, Header
 from typing import Dict, List, Optional
 from datetime import datetime
 from uuid import uuid4
@@ -165,3 +166,27 @@ async def delete_vote(
     })
 
     return {"status": "deleted", "vote_id": vote_id}
+
+@router.delete(
+    "/votes",
+    status_code=status.HTTP_200_OK
+)
+async def clear_all_votes(
+    admin_password: str = Header(
+        ...,
+        alias="X-Admin-Password",
+        description="관리자 비밀번호"
+    )
+):
+    # 1) 관리자 비밀번호 검증
+    if admin_password != os.getenv("ADMIN_PASSWORD"):
+        raise HTTPException(status_code=401, detail="관리자 비밀번호가 틀렸습니다.")
+
+    # 2) 메모리·파일 초기화
+    votes.clear()
+    save_votes()
+
+    # 3) WebSocket 알림
+    await manager.broadcast_vote({ "type": "all_votes_cleared" })
+
+    return { "status": "cleared" }
