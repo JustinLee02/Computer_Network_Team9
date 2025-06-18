@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from fastapi import APIRouter, HTTPException, Query, status, Header
 from typing import Dict, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 
 from app.schemas import (
@@ -45,7 +45,7 @@ async def create_vote(vote: VoteCreate):
         "description": vote.description,
         "options":     vote.options,
         "counts":      {o: 0 for o in vote.options},
-        "created_at":  datetime.utcnow(),
+        "created_at": datetime.now(timezone.utc).isoformat(timespec="milliseconds"),
         "active":      True,
         "is_public":   vote.is_public,
         "password":    hash_password(vote.password)
